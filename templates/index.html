@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Получение токена Дневник.ру</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Получение токена Дневник.ру</h1>
+        <p class="text-gray-700 mb-4">Нажмите кнопку ниже, чтобы авторизоваться на <a href="https://dnevnik.ru" target="_blank" class="text-indigo-600">dnevnik.ru</a> и получить токен.</p>
+        <button id="getTokenBtn"
+                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            Получить токен
+        </button>
+        <p id="error" class="text-red-600 mt-4 hidden"></p>
+    </div>
+    <script>
+        document.getElementById("getTokenBtn").addEventListener("click", () => {
+            const errorElement = document.getElementById("error");
+            errorElement.classList.add("hidden");
+            errorElement.textContent = "";
+
+            const loginUrl = "https://login.dnevnik.ru/login/";
+            const returnUrl = "https://login.dnevnik.ru/oauth2?response_type=token&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo&redirect_uri=http://localhost:8000/callback";
+            const redirectUrl = `${loginUrl}?ReturnUrl=${encodeURIComponent(returnUrl)}`;
+
+            // Перенаправляем на login.dnevnik.ru
+            window.location.href = redirectUrl;
+        });
+    </script>
+</body>
+</html>

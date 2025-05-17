@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка токена</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Обработка токена</h1>
+        <p class="text-gray-700 mb-4">Пожалуйста, подождите, токен обрабатывается...</p>
+        <p id="error" class="text-red-600 mt-4 hidden"></p>
+    </div>
+    <script>
+        window.addEventListener("load", async () => {
+            const errorElement = document.getElementById("error");
+            errorElement.classList.add("hidden");
+            errorElement.textContent = "";
+
+            try {
+                const fullUrl = window.location.href;
+                if (fullUrl.includes("access_token=")) {
+                    const response = await fetch("/get-token", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ url: fullUrl })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Ошибка получения токена");
+                    }
+
+                    const html = await response.text();
+                    document.body.innerHTML = html;
+                } else {
+                    throw new Error("Токен не найден в URL");
+                }
+            } catch (error) {
+                errorElement.textContent = "Ошибка: " + error.message;
+                errorElement.classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+</html>
