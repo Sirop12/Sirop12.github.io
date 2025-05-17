@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from pydnevnikruapi.dnevnik.exceptions import DiaryError
 from urllib.parse import urlparse, parse_qs, urlencode
 import requests
@@ -16,7 +16,7 @@ RETURN_URL = (
     "https://login.dnevnik.ru/oauth2?response_type=token"
     "&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f"
     "&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo"
-    "&redirect_uri=https://androsovpavel.pythonanywhere.com/callback"
+    "&redirect_uri=http://localhost:8000/callback"
 )
 
 def get_token_from_url(url: str) -> str:
