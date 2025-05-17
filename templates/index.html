@@ -23,9 +23,10 @@
             errorElement.textContent = "";
 
             const loginUrl = "https://login.dnevnik.ru/login/";
-            const returnUrl = "https://login.dnevnik.ru/oauth2?response_type=token&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo&redirect_uri=https://androsovpavel.pythonanywhere.com/callback";
+            const returnUrl = "https://login.dnevnik.ru/oauth2?response_type=token&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo&redirect_uri=http://localhost:8000/callback";
             const redirectUrl = `${loginUrl}?ReturnUrl=${encodeURIComponent(returnUrl)}`;
 
+            // Перенаправляем на login.dnevnik.ru
             window.location.href = redirectUrl;
         });
     </script>
