@@ -1,12 +1,16 @@
-Генератор токенов Дневник.ру
+# Генератор токенов Дневник.ру
+
 Простое веб-приложение на Flask для аутентификации пользователей через OAuth2 Дневник.ру и получения токена доступа для API Дневник.ру.
-Возможности
 
-Удобный интерфейс для запуска аутентификации через OAuth2 на Дневник.ру.
-Перенаправление на Дневник.ру для входа и получения токена доступа.
-Отображение токена для использования в API Дневник.ру (например, с библиотекой pydnevnikruapi).
+## Возможности
 
-Структура проекта
+- Удобный интерфейс для запуска аутентификации через OAuth2 на Дневник.ру.
+- Перенаправление на Дневник.ру для входа и получения токена доступа.
+- Отображение токена для использования в API Дневник.ру (например, с библиотекой `pydnevnikruapi`).
+
+## Структура проекта
+
+```plaintext
 dnevnik-token/
 ├── app.py                # Основное приложение Flask
 ├── static/
@@ -17,121 +21,136 @@ dnevnik-token/
 │   └── result.html       # Отображение полученного токена
 ├── requirements.txt      # Зависимости Python
 └── README.md             # Этот файл
+```
 
-Требования
+## Требования
 
-Python 3.8 или выше
-Учётная запись Дневник.ру для тестирования
-Зарегистрированное OAuth2-приложение Дневник.ру (client ID)
+- Python 3.8 или выше
+- Учётная запись Дневник.ру для тестирования
+- Зарегистрированное OAuth2-приложение Дневник.ру (client ID)
 
-Установка
+## Установка
 
-Клонируйте репозиторий:
-git clone https://github.com/ваш-username/dnevnik-token.git
-cd dnevnik-token
+1. Клонируйте репозиторий:
 
+   ```bash
+   git clone https://github.com/ваш-username/dnevnik-token.git
+   cd dnevnik-token
+   ```
 
-Создайте и активируйте виртуальное окружение:
-python -m venv venv
-source venv/bin/activate  # На Windows: venv\Scripts\activate
+2. Создайте и активируйте виртуальное окружение:
 
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # На Windows: venv\Scripts\activate
+   ```
 
-Установите зависимости:
-pip install -r requirements.txt
+3. Установите зависимости:
 
+   ```bash
+   pip install -r requirements.txt
+   ```
 
+## Локальный запуск
 
-Локальный запуск
+1. Запустите приложение Flask:
 
-Запустите приложение Flask:
-python app.py
+   ```bash
+   python app.py
+   ```
 
+2. Откройте `http://localhost:8000` в браузере.
+3. Нажмите **Получить токен**, авторизуйтесь на Дневник.ру и получите токен.
 
-Откройте http://localhost:8000 в браузере.
+## Развёртывание
 
-Нажмите Получить токен, авторизуйтесь на Дневник.ру и получите токен.
+### PythonAnywhere
 
+1. Загрузите файлы проекта в `/home/ваш-username/mysite/` на PythonAnywhere.
+2. Обновите `RETURN_URL` в `app.py`:
 
-Развёртывание
-PythonAnywhere
+   ```python
+   RETURN_URL = (
+       "https://login.dnevnik.ru/oauth2?response_type=token"
+       "&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f"
+       "&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo"
+       "&redirect_uri=https://ваш-username.pythonanywhere.com/callback"
+   )
+   ```
 
-Загрузите файлы проекта в /home/ваш-username/mysite/ на PythonAnywhere.
+3. Обновите `index.html`, чтобы `redirect_uri` соответствовал.
+4. Установите зависимости в консоли Bash на PythonAnywhere:
 
-Обновите RETURN_URL в app.py:
-RETURN_URL = (
-    "https://login.dnevnik.ru/oauth2?response_type=token"
-    "&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f"
-    "&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo"
-    "&redirect_uri=https://ваш-username.pythonanywhere.com/callback"
-)
+   ```bash
+   pip install --user -r requirements.txt
+   ```
 
+5. Настройте WSGI-файл (`/var/www/ваш-username_pythonanywhere_com_wsgi.py`):
 
-Обновите index.html, чтобы redirect_uri соответствовал.
+   ```python
+   import sys
+   path = '/home/ваш-username/mysite'
+   if path not in sys.path:
+       sys.path.append(path)
+   from app import app as application
+   ```
 
-Установите зависимости в консоли Bash на PythonAnywhere:
-pip install --user -r requirements.txt
+6. Перезагрузите веб-приложение через вкладку **Web** на PythonAnywhere.
 
+### Heroku
 
-Настройте WSGI-файл (/var/www/ваш-username_pythonanywhere_com_wsgi.py):
-import sys
-path = '/home/ваш-username/mysite'
-if path not in sys.path:
-    sys.path.append(path)
-from app import app as application
+1. Создайте файл `Procfile`:
 
+   ```text
+   web: gunicorn app:app
+   ```
 
-Перезагрузите веб-приложение через вкладку Web на PythonAnywhere.
+2. Разверните приложение:
 
+   ```bash
+   heroku login
+   heroku create dnevnik-token
+   git push heroku main
+   ```
 
-Heroku
+3. Обновите `RETURN_URL` и `index.html` с URL Heroku.
 
-Создайте файл Procfile:
-web: gunicorn app:app
+## Использование
 
+1. Перейдите на развёрнутый сайт (например, `https://androsovpavel.pythonanywhere.com/`).
+2. Нажмите **Получить токен** для аутентификации на Дневник.ру.
+3. После входа токен будет отображён (например, `gu0CKxoJ1SM7OXEn2e4CYFXOOMdHvc5P`).
+4. Используйте токен с библиотекой `pydnevnikruapi`:
 
-Разверните приложение:
-heroku login
-heroku create dnevnik-token
-git push heroku main
+   ```python
+   from pydnevnikruapi.async_diary import DnevnikFormatter
+   import asyncio
 
+   async def test_token():
+       formatter = DnevnikFormatter(token="ваш-токен")
+       try:
+           await formatter.initialize()
+           print("Токен валиден!")
+       except Exception as e:
+           print(f"Ошибка токена: {e}")
 
-Обновите RETURN_URL и index.html с URL Heroku.
+   asyncio.run(test_token())
+   ```
 
+## Устранение неполадок
 
-Использование
+- **Перенаправление на `localhost:8000`**:
+  Убедитесь, что `RETURN_URL` в `app.py` и `returnUrl` в `index.html` соответствуют URL развёрнутого сайта.
+- **Проблемы с CORS**:
+  Проверьте доступность `login.dnevnik.ru`:
 
-Перейдите на развёрнутый сайт (например, https://androsovpavel.pythonanywhere.com/).
+   ```bash
+   curl -I https://login.dnevnik.ru
+   ```
 
-Нажмите Получить токен для аутентификации на Дневник.ру.
+- **Логи**:
+  На PythonAnywhere проверяйте логи ошибок и сервера во вкладке **Web**.
 
-После входа токен будет отображён (например, gu0CKxoJ1SM7OXEn2e4CYFXOOMdHvc5P).
+## Лицензия
 
-Используйте токен с библиотекой pydnevnikruapi:
-from pydnevnikruapi.async_diary import DnevnikFormatter
-import asyncio
-
-async def test_token():
-    formatter = DnevnikFormatter(token="ваш-токен")
-    try:
-        await formatter.initialize()
-        print("Токен валиден!")
-    except Exception as e:
-        print(f"Ошибка токена: {e}")
-
-asyncio.run(test_token())
-
-
-
-Устранение неполадок
-
-Перенаправление на localhost:8000:Убедитесь, что RETURN_URL в app.py и returnUrl в index.html соответствуют URL развёрнутого сайта.
-
-Проблемы с CORS:Проверьте доступность login.dnevnik.ru:
-curl -I https://login.dnevnik.ru
-
-
-Логи:На PythonAnywhere проверяйте логи ошибок и сервера во вкладке Web.
-
-
-Лицензия
 MIT License
