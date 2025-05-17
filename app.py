@@ -1,29 +1,25 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, render_template, request, jsonify
 from pydnevnikruapi.dnevnik.exceptions import DiaryError
 from urllib.parse import urlparse, parse_qs, urlencode
-import aiohttp
+import requests
 import logging
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app = Flask(__name__, template_folder="templates", static_folder="static")
 
 LOGIN_URL = "https://login.dnevnik.ru/login/"
 RETURN_URL = (
     "https://login.dnevnik.ru/oauth2?response_type=token"
     "&client_id=bb97b3e445a340b9b9cab4b9ea0dbd6f"
     "&scope=CommonInfo,ContactInfo,FriendsAndRelatives,EducationalInfo"
-    "&redirect_uri=http://localhost:8000/callback"
+    "&redirect_uri=https://androsovpavel.pythonanywhere.com/callback"
 )
 
-async def get_token_from_url(url: str) -> str:
+def get_token_from_url(url: str) -> str:
     """Извлекает токен из URL, включая фрагмент."""
     try:
         logger.info(f"Полученный URL: {url}")
@@ -60,64 +56,62 @@ async def get_token_from_url(url: str) -> str:
         logger.error(f"Ошибка извлечения токена: {e}")
         raise DiaryError(f"Ошибка обработки URL: {str(e)}")
 
-@app.get("/", response_class=HTMLResponse)
-async def get_form(request: Request):
+@app.route("/", methods=["GET"])
+def get_form():
     """Отображает главную страницу."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return render_template("index.html")
 
-@app.get("/callback", response_class=HTMLResponse)
-async def callback(request: Request):
+@app.route("/callback", methods=["GET"])
+def callback():
     """Обрабатывает редирект от login.dnevnik.ru."""
-    return templates.TemplateResponse("callback.html", {"request": request})
+    return render_template("callback.html")
 
-@app.post("/get-token", response_class=HTMLResponse)
-async def fetch_token(request: Request, body: dict):
+@app.route("/get-token", methods=["POST"])
+def fetch_token():
     """Обрабатывает URL от клиента и возвращает токен."""
     try:
-        url = body.get("url")
+        data = request.get_json()
+        url = data.get("url") if data else None
         if not url:
             raise DiaryError("URL не предоставлен")
 
-        token = await get_token_from_url(url)
-        return templates.TemplateResponse(
-            "result.html",
-            {"request": request, "token": token}
-        )
+        token = get_token_from_url(url)
+        return render_template("result.html", token=token)
     except DiaryError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise BadRequest(str(e))
     except Exception as e:
         logger.error(f"Неизвестная ошибка: {e}")
-        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
+        raise InternalServerError("Внутренняя ошибка сервера")
 
-@app.post("/proxy", response_class=JSONResponse)
-async def proxy_request(request: Request, body: dict):
+@app.route("/proxy", methods=["POST"])
+def proxy_request():
     """Проксирует запрос к login.dnevnik.ru, чтобы обойти CORS."""
     try:
-        login_url = body.get("loginUrl")
-        return_url = body.get("returnUrl")
+        data = request.get_json()
+        login_url = data.get("loginUrl") if data else None
+        return_url = data.get("returnUrl") if data else None
         if not login_url or not return_url:
             raise DiaryError("Некорректные параметры запроса")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                login_url,
-                params={"ReturnUrl": return_url},
-                allow_redirects=True,
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
-            ) as response:
-                if response.status != 200:
-                    logger.error(f"Статус ответа: {response.status}")
-                    raise DiaryError("Сайт недоступен или ведутся технические работы")
+        response = requests.get(
+            login_url,
+            params={"ReturnUrl": return_url},
+            allow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+        )
 
-                url = str(response.url)
-                logger.info(f"Ответный URL: {url}")
-                return {"url": url}
+        if response.status_code != 200:
+            logger.error(f"Статус ответа: {response.status_code}")
+            raise DiaryError("Сайт недоступен или ведутся технические работы")
+
+        url = str(response.url)
+        logger.info(f"Ответный URL: {url}")
+        return jsonify({"url": url})
     except DiaryError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise BadRequest(str(e))
     except Exception as e:
         logger.error(f"Ошибка проксирования: {e}")
-        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
+        raise InternalServerError("Внутренняя ошибка сервера")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000, debug=True)
